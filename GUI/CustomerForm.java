@@ -135,13 +135,13 @@ class XacNhanThanhToan extends JFrame {
         JLabel lblTotal = new JLabel("Tổng tiền thanh toán: ");
         JLabel lblTotalAmount = new JLabel(String.format("%.2f VND", total));
 
-        JLabel lblInfo = new JLabel("Nhập mã xác minh thanh toán: ");
+        JLabel lblInfo = new JLabel("Nhập mã xác minh: ");
         JTextField txtCode = new JTextField();
 
         JButton btnPay = new JButton("Xác nhận thanh toán");
         btnPay.addActionListener(e -> {
             String code = txtCode.getText();
-            if(!code.equals(phone + String.format("%.2f", total))) {
+            if (!code.equals(phone + String.format("%.2f", total))) {
                 JOptionPane.showMessageDialog(this, "Mã xác minh không đúng!");
                 return;
             }
@@ -153,7 +153,7 @@ class XacNhanThanhToan extends JFrame {
         panel.add(lblTotalAmount);
         panel.add(lblInfo);
         panel.add(txtCode);
-        
+
         panel.add(new JLabel());
         panel.add(btnPay);
 
