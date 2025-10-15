@@ -106,25 +106,30 @@ class TourInput extends JFrame {
             String destination = txtDestination.getText();
             String dayStart = txtDayStart.getText();
             String numberOfDaysStr = txtNumberOfDays.getText();
-            String numberOfPassengersStr = txtNumberOfPassengers.getText();
-            String numberOfGuidesStr = txtNumberOfGuides.getText();
-            String price = txtPrice.getText();
+            String maxNumberOfPassengersStr = txtNumberOfPassengers.getText();
+            String maxNumberOfGuidesStr = txtNumberOfGuides.getText();
+            String priceStr = txtPrice.getText();
             String guideCondition = cbLanguage.getSelectedItem().toString();
 
-            if (tourName.isEmpty() || price.isEmpty() || numberOfDaysStr.isEmpty() || dayStart.isEmpty()
-                    || numberOfPassengersStr.isEmpty() || numberOfGuidesStr.isEmpty()) {
+            if (tourName.isEmpty() || priceStr.isEmpty() || numberOfDaysStr.isEmpty() || dayStart.isEmpty()
+                    || maxNumberOfPassengersStr.isEmpty() || maxNumberOfGuidesStr.isEmpty()) {
                 statusLabel.setText("⚠️ Vui lòng nhập đầy đủ thông tin!");
                 statusLabel.setForeground(Color.RED);
                 return;
-            } else if (!Main.isDouble(price)) {
+            }else if(!Main.isDouble(numberOfDaysStr)) {
+                statusLabel.setText("❌️ Thời gian không hợp lệ!");
+                statusLabel.setForeground(Color.RED);
+                return;
+            }
+            else if (!Main.isDouble(priceStr)) {
                 statusLabel.setText("❌️ Giá không hợp lệ!");
                 statusLabel.setForeground(Color.RED);
                 return;
-            } else if (!Main.isInteger(numberOfPassengersStr)) {
+            } else if (!Main.isInteger(maxNumberOfPassengersStr)) {
                 statusLabel.setText("❌️ Số hành khách tối đa không hợp lệ");
                 statusLabel.setForeground(Color.RED);
                 return;
-            } else if (!Main.isInteger(numberOfGuidesStr)) {
+            } else if (!Main.isInteger(maxNumberOfGuidesStr)) {
                 statusLabel.setText("❌️ Số hướng dẫn viên không hợp lệ");
                 statusLabel.setForeground(Color.RED);
                 return;
@@ -137,20 +142,20 @@ class TourInput extends JFrame {
             // Kết nối database
              try {
                 // chuyển đổi các giá trị số
-                float daysValue = Float.parseFloat(numberOfDaysStr);
-                double priceValue = Double.parseDouble(price);
-                int passengersValue = Integer.parseInt(numberOfPassengersStr);
-                int guidesValue = Integer.parseInt(numberOfGuidesStr);
+                double numberOfDays = Double.parseDouble(numberOfDaysStr);
+                double price = Double.parseDouble(priceStr);
+                int maxNumberOfPassengers = Integer.parseInt(maxNumberOfPassengersStr);
+                int maxNumberOfGuides = Integer.parseInt(maxNumberOfGuidesStr);
 
                 // các hàm 'set' để gán giá trị
                 tour.setTourName(tourName);
                 tour.setStartFrom(start);
                 tour.setDestination(destination);
                 tour.setDayStart(dayStart);
-                tour.setNumberOfDays(daysValue);
-                tour.setPrice(priceValue);
-                tour.setNumberOfPassengers(passengersValue);
-                tour.setNumberOfGuides(guidesValue);
+                tour.setNumberOfDays(numberOfDays);
+                tour.setPrice(price);
+                tour.setMaxNumberOfPassengers(maxNumberOfPassengers);
+                tour.setMaxNumberOfGuides(maxNumberOfGuides);
                 tour.setLanguageGuideNeed(guideCondition);
 
                 // lưu vào database
@@ -181,9 +186,9 @@ class TourInput extends JFrame {
                 statusLabel.setForeground(Color.RED);
             }
             JOptionPane.showMessageDialog(this,
-                   "Tour : " + tourName + "\nGiá: " + price + " VND / người\n" + "Thời gian: " + numberOfDaysStr +
-                           "\nSố lượng hành khách: " + numberOfPassengersStr + " người" + "\nSố lượng hướng dẫn viên: "
-                           + numberOfGuidesStr + " người"
+                   "Tour : " + tourName + "\nGiá: " + priceStr + " VND / người\n" + "Thời gian: " + numberOfDaysStr +
+                           "\nSố lượng hành khách: " + maxNumberOfPassengersStr + " người" + "\nSố lượng hướng dẫn viên: "
+                           + maxNumberOfGuidesStr + " người"
                            + "\nĐiều kiện hướng dẫn viên: " + guideCondition,
                    "Thông tin chuyến đi", JOptionPane.INFORMATION_MESSAGE);
         });

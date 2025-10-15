@@ -4,24 +4,15 @@ import java.time.*;
 import java.time.format.*;
 
 public class Human {
-    private String Id, Name, Birthday, PhoneNumber, Email, TourBooking, BookingDate, BookingState;
-    private static int count = 0;
+    private String Name, Birthday, PhoneNumber, Email, TourBooking, BookingDate, BookingState;
 
     public Human() {
-        this.Id = "";
         this.Name = "";
         this.Birthday = "";
         this.PhoneNumber = "";
         this.Email = "";
     }
 
-    public String getId() {
-        return this.Id;
-    }
-
-    public void setId(String Id) {
-        this.Id = Id;
-    }
 
     public String getName() {
         return this.Name;

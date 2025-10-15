@@ -2,10 +2,12 @@ USE TRAVELBOOKINGSYSTEMAPP;
 SET SQL_SAFE_UPDATES = 0;
 
 
-INSERT INTO TOUR (tourName, startFrom, destination, dayStart, numberOfDays, price, maxNumberOfPassenger, tourState, maxNumberOfGuides, languageGuideNeed) VALUES
-('Khám phá Vịnh Hạ Long', 'Hà Nội', 'Vịnh Hạ Long, Quảng Ninh', '2025-11-20', 2, 3500000, 25, 'Not Full', 2, 'Tiếng Anh, Tiếng Việt'),
-('Chinh phục Fansipan', 'Thị xã Sa Pa', 'Đỉnh Fansipan, Lào Cai', '2025-12-10', 2, 4200000, 15, 'Not Full', 1, 'Tiếng Việt'),
-('Nghỉ dưỡng tại Đà Nẵng', 'Sân bay Đà Nẵng', 'Bãi biển Mỹ Khê, Hội An', '2026-01-15', 4, 7800000, 30, 'Full', 2, 'Tiếng Hàn');
+INSERT INTO TOUR (tourName, startFrom, destination, dayStart, numberOfDays, price, maxNumberOfPassengers, currentPassengers, tourState, maxNumberOfGuides, currentGuides, tourGuideState, languageGuideNeed) 
+VALUES 
+('Miền Tây sông nước', 'Cần Thơ', 'Châu Đốc - Rừng tràm Trà Sư', '2026-01-10', 3, 2800000, 25, 10, 'Not Full', 2, 1, 'NOT FULL', 'Tiếng Nhật'),
+('Về với biển xanh Nha Trang', 'Cam Ranh', 'Nha Trang', '2026-01-20', 4, 4200000, 40, 40, 'Full', 3, 3, 'FULL', 'Tiếng Anh'),
+('Khám phá Đà Lạt mộng mơ', 'TP. Hồ Chí Minh', 'Đà Lạt', '2026-02-05', 3, 3100000, 30, 15, 'Not Full', 2, 2, 'FULL', 'Tiếng Hàn'),
+('Lên rừng xuống biển Quy Nhơn - Phú Yên', 'Quy Nhơn', 'Quy Nhơn - Phú Yên', '2026-02-15', 4, 4500000, 20, 20, 'Full', 2, 1, 'NOT FULL', 'Tiếng Trung');
 
 INSERT INTO Customer (`Name`, Birthday, phoneNumber, Email, TourBooking, BookingState, BookingDate, numberOfCustomers, price) VALUES
 ('Nguyễn Văn An', '1990-05-15', '0912345678', 'an.nguyen@email.com', 'TOUR001', 'Confirmed', '2025-10-01', 2, 7000000),
