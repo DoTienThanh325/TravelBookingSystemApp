@@ -3,7 +3,6 @@ package TourDAO;
 import Model.Tour;
 
 import java.sql.*;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -12,40 +11,41 @@ import java.util.ArrayList;
 public class TourDAO {
 
     // Thêm Tour vào Database
-    public void addTour(Tour tour) throws SQLException, ClassNotFoundException {
-        String sql = "INSERT INTO tours (tourName, startFrom, destination, dayStart, numberOfDays, price, maxNumberOfPassengers, currentPassengers, tourState,  maxNumberOfGuides, currentGuides, tourGuideState, languageGuideNeed) VALUES (?, ?, ?, STR_TO_DATE(?, '%d/%m/%Y'), ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public static void addTour(Tour tour) throws SQLException, ClassNotFoundException {
 
-        try (Connection conn = TourDBConnection.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (Connection conn = TourDBConnection.getConnection()) {
+            String sql = "INSERT INTO TOUR (tourName, startFrom, destination, dayStart, numberOfDays, price, maxNumberOfPassengers, currentPassengers, tourState,  maxNumberOfGuides, currentGuides, tourGuideState, languageGuideNeed) VALUES (?, ?, ?, STR_TO_DATE(?, '%d/%m/%Y'), ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
 
             pstmt.setString(1, tour.getTourName());
             pstmt.setString(2, tour.getStartFrom());
             pstmt.setString(3, tour.getDestination());
-
-            try {
-                java.util.Date utilDate = new SimpleDateFormat("dd/MM/yyyy").parse(tour.getDayStart());
-                java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
-                pstmt.setDate(4, sqlDate);
-            } catch (ParseException e) {
-                pstmt.setNull(4, Types.DATE);
-            }
-
+            pstmt.setString(4, tour.getDayStart());
             pstmt.setDouble(5, tour.getNumberOfDays());
             pstmt.setDouble(6, tour.getPrice());
             pstmt.setInt(7, tour.getMaxNumberOfPassengers());
             pstmt.setInt(8, tour.getCurrentPassengers());
             pstmt.setString(9, tour.getTourState());
             pstmt.setInt(10, tour.getMaxNumberOfGuides());
-            pstmt.setString(11, tour.getTourGuideState());
-            pstmt.setString(12, tour.getLanguageGuideNeed());
+            pstmt.setInt(11, tour.getCurrentGuides());
+            pstmt.setString(12, tour.getTourGuideState());
+            pstmt.setString(13, tour.getLanguageGuideNeed());
 
-            pstmt.executeUpdate();
+            int rows = pstmt.executeUpdate();
+            if (rows > 0) {
+                System.out.println("Thêm Tour thành công!");
+            } else {
+                System.out.println("Không thể thêm Tour.");
+            }
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Lỗi khi thêm tour: " + e.getMessage());
         }
     }
 
-    public Tour getTourById(String tourId) throws SQLException, ClassNotFoundException {
-        String sql = "SELECT * FROM tours WHERE tourId = ?";
+    public static Tour getTourById(String tourId) throws SQLException, ClassNotFoundException {
+        String sql = "SELECT * FROM TOUR WHERE tourId = ?";
         Tour tour = null;
         try (Connection conn = TourDBConnection.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -54,13 +54,16 @@ public class TourDAO {
             if (rs.next()) {
                 tour = createTourFromResultSet(rs);
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Lỗi khi tìm tour: " + e.getMessage());
         }
         return tour;
     }
 
     // Cập nhật lại số lượng khách hàng, hướng dẫn viên và trạng thái tour
-    public void updateTour(Tour tour) throws SQLException, ClassNotFoundException {
-        String sql = "UPDATE TOUR SET currentPassangers = ?, tourState = ?, currentGuides = ?, tourGuideState = ?";
+    public static void updateTour(Tour tour, String tourId) throws SQLException, ClassNotFoundException {
+        String sql = "UPDATE TOUR SET currentPassengers = ?, tourState = ?, currentGuides = ?, tourGuideState = ? WHERE tourId = ?";
 
         try (Connection conn = TourDBConnection.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -69,12 +72,15 @@ public class TourDAO {
             pstmt.setString(2, tour.getTourState());
             pstmt.setInt(3, tour.getCurrentGuides());
             pstmt.setString(4, tour.getTourGuideState());
-
+            pstmt.setString(5, tourId);
             pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Lỗi khi cập nhật tour: " + e.getMessage());
         }
     }
 
-    private Tour createTourFromResultSet(ResultSet rs) throws SQLException {
+    private static Tour createTourFromResultSet(ResultSet rs) throws SQLException {
         // BƯỚC 1: Lấy về dưới dạng java.sql.Date từ ResultSet
         Date dbDate = rs.getDate("dayStart");
         String formattedDate = null; // Khởi tạo chuỗi kết quả
@@ -102,8 +108,7 @@ public class TourDAO {
                 rs.getInt("maxNumberOfGuides"),
                 rs.getInt("currentGuides"),
                 rs.getString("tourGuideState"),
-                rs.getString("languageGuideNeed")
-        );
+                rs.getString("languageGuideNeed"));
         return tour;
     }
 

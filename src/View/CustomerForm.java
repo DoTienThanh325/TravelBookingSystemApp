@@ -2,6 +2,7 @@ package View;
 
 import Main.Main;
 import Model.Customer;
+import Model.Tour;
 import TourDAO.TourDAO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -10,6 +11,7 @@ import Customer_dao.CustomerDAO;
 
 import java.awt.*;
 import java.math.BigDecimal;
+import java.sql.SQLException;
 
 public class CustomerForm extends JFrame {
     public CustomerForm(String DB_URL, String DB_USER, String DB_PASSWORD) {
@@ -67,8 +69,24 @@ public class CustomerForm extends JFrame {
             customer.setEmail(email);
             customer.chuanHoaTenVaNgaySinh();
 
-            new TourWindow(customer, DB_URL, DB_USER, DB_PASSWORD);
-            dispose();
+            try {
+                if (CustomerDAO.check(customer) != null) {
+                    String field = CustomerDAO.check(customer);
+                    if (field.equals("email")) {
+                        statusLabel.setText("❌ Email đã tồn tại!");
+                    } else if (field.equals("phone")) {
+                        statusLabel.setText("❌ Số điện thoại đã tồn tại!");
+                    }
+                    statusLabel.setForeground(Color.RED);
+                    return;
+                } else {
+                    new TourWindow(customer, DB_URL, DB_USER, DB_PASSWORD);
+                    dispose();
+                }
+            } catch (SQLException e1) {
+
+                e1.printStackTrace();
+            }
         });
 
         panel.add(lblName);
@@ -114,7 +132,8 @@ class TourWindow extends JFrame {
         JComboBox<Double> cbNumberOfDays = new JComboBox<>(); // Khởi tạo rỗng
 
         JLabel statusLabel = new JLabel("Trạng thái Tour: ");
-        JLabel lblTourState = new JLabel("");
+        JLabel lblTourState = new JLabel("Not Full");
+        lblTourState.setForeground(new Color(0, 102, 0));
 
         // Tải dữ liệu lần đầu cho tour được chọn mặc định
         if (cbTour.getItemCount() > 0) {
@@ -127,8 +146,7 @@ class TourWindow extends JFrame {
                 Double[] initialDays = tourDao.collectTourDays(initialTour, initialDate, DB_URL, DB_USER, DB_PASSWORD);
                 cbNumberOfDays.setModel(new DefaultComboBoxModel<>(initialDays));
             }
-            // Cập nhật trạng thái ngay lần đầu tải
-            updateTourStatus(cbTour, cbDate, cbNumberOfDays, lblTourState);
+
         }
 
         // === THÊM ACTIONLISTENER CHO cbTour ===
@@ -144,8 +162,8 @@ class TourWindow extends JFrame {
                             DB_PASSWORD);
                     cbNumberOfDays.setModel(new DefaultComboBoxModel<>(newNumDays));
                 }
-                updateTourStatus(cbTour, cbDate, cbNumberOfDays, lblTourState);
             }
+            reupTourStatus(lblTourState);
         });
 
         // === THÊM ACTIONLISTENER CHO cbDate ===
@@ -155,8 +173,8 @@ class TourWindow extends JFrame {
             if (selectedTour != null && selectedDate != null) {
                 Double[] newNumDays = tourDao.collectTourDays(selectedTour, selectedDate, DB_URL, DB_USER, DB_PASSWORD);
                 cbNumberOfDays.setModel(new DefaultComboBoxModel<>(newNumDays));
-                updateTourStatus(cbTour, cbDate, cbNumberOfDays, lblTourState);
             }
+            reupTourStatus(lblTourState);
         });
 
         // Bỏ ActionListener của cbNumberOfDays
@@ -168,18 +186,6 @@ class TourWindow extends JFrame {
             String numPeople = cbNumber.getSelectedItem().toString();
             Double numDays = (Double) cbNumberOfDays.getSelectedItem();
 
-            String tourId = CustomerDAO.findTourId(tourName, date, numDays);
-            String tourState = CustomerDAO.findTourState(tourId);
-
-            if ("Full".equalsIgnoreCase(tourState)) {
-                JOptionPane.showMessageDialog(this, "⚠️ Tour này đã đủ người! Vui lòng chọn tour khác.", "Tour Đã Đầy",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            customer.setTourBooking(tourId);
-            customer.setBookingDate(java.time.LocalDate.now().toString());
-            customer.setNumberOfCustomers(Integer.parseInt(numPeople));
             JOptionPane.showMessageDialog(this,
                     "Họ và tên: " + customer.getName() +
                             "\nNgày sinh: " + customer.getBirthday() +
@@ -199,21 +205,9 @@ class TourWindow extends JFrame {
             String tourName = (String) cbTour.getSelectedItem();
             String date = (String) cbDate.getSelectedItem();
             Double numDays = (Double) cbNumberOfDays.getSelectedItem();
+            int selectedNumber = (Integer) cbNumber.getSelectedItem();
             String tourId = CustomerDAO.findTourId(tourName, date, numDays);
-            String tourState = CustomerDAO.findTourState(tourId);
-
-            if ("Full".equalsIgnoreCase(tourState)) {
-                JOptionPane.showMessageDialog(this, "⚠️ Tour này đã đủ người! Vui lòng chọn tour khác.", "Tour Đã Đầy",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            customer.setTourBooking(tourId);
-            customer.setBookingDate(date);
-            customer.setNumberOfCustomers((Integer) cbNumber.getSelectedItem());
-
-            new XacNhanThanhToan(customer, customer.getNumberOfCustomers(), DB_URL, DB_USER, DB_PASSWORD);
-            dispose();
+            updateTourStatus(tourId, selectedNumber, lblTourState, customer, DB_URL, DB_USER, DB_PASSWORD);
         });
 
         panel.add(lblTour);
@@ -234,30 +228,43 @@ class TourWindow extends JFrame {
 
     }
 
-    // <<< PHƯƠNG THỨC MỚI ĐƯỢC THÊM VÀO >>>
-    private void updateTourStatus(JComboBox<String> cbTour, JComboBox<String> cbDate, JComboBox<Double> cbNumberOfDays,
-            JLabel lblTourState) {
-        String selectedTour = (String) cbTour.getSelectedItem();
-        String selectedDate = (String) cbDate.getSelectedItem();
-        Double selectedDays = (Double) cbNumberOfDays.getSelectedItem();
-
-        if (selectedTour != null && selectedDate != null && selectedDays != null) {
-            String tourId = CustomerDAO.findTourId(selectedTour, selectedDate, selectedDays);
-            if (tourId != null) {
-                String tourState = CustomerDAO.findTourState(tourId);
-                lblTourState.setText(tourState);
-                if ("Full".equalsIgnoreCase(tourState)) {
-                    lblTourState.setForeground(Color.RED);
-                } else {
-                    lblTourState.setForeground(new Color(0, 102, 0)); // Màu xanh lá cây đậm
-                }
-            } else {
-                lblTourState.setText("Không tìm thấy");
-                lblTourState.setForeground(Color.ORANGE);
-            }
-        } else {
-            lblTourState.setText("");
+    private void updateTourStatus(String tourId, int selectedNumber, JLabel lblTourState, Customer customer,
+            String DB_URL, String DB_USER, String DB_PASSWORD) {
+        Tour tour = new Tour();
+        try {
+            tour = TourDAO.getTourById(tourId);
+        } catch (ClassNotFoundException | SQLException e1) {
+            e1.printStackTrace();
         }
+        tour.setTourState(selectedNumber);
+        String tourState = tour.getTourState();
+
+        lblTourState.setText(tourState);
+        if ("Full".equalsIgnoreCase(tourState)) {
+            lblTourState.setForeground(Color.RED);
+            JOptionPane.showMessageDialog(this, "⚠️ Tour này đã đủ người! Vui lòng chọn tour khác.", "Tour Đã Đầy",
+                    JOptionPane.WARNING_MESSAGE);
+        } else {
+            lblTourState.setForeground(new Color(0, 102, 0)); // Màu xanh lá cây đậm
+            tour.setCurrentPassengers(selectedNumber);
+            tour.setTourState(1);
+            try {
+                TourDAO.updateTour(tour, tourId);
+            } catch (ClassNotFoundException | SQLException e1) {
+                e1.printStackTrace();
+            }
+            customer.setTourBooking(tourId);
+            customer.setBookingDate(java.time.LocalDate.now().toString());
+            customer.setNumberOfCustomers(selectedNumber);
+
+            new XacNhanThanhToan(customer, customer.getNumberOfCustomers(), DB_URL, DB_USER, DB_PASSWORD);
+            dispose();
+        }
+    }
+
+    private void reupTourStatus(JLabel lblTourState) {
+        lblTourState.setText("Not Full");
+        lblTourState.setForeground(new Color(0, 102, 0));
     }
 }
 

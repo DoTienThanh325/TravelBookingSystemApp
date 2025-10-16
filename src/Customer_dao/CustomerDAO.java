@@ -170,4 +170,35 @@ public class CustomerDAO {
             System.out.println("Lỗi khi thêm khách hàng: " + e.getMessage());
         }
     }
+
+    public static String check(Customer cst) throws SQLException {
+        String dataExists = null;
+        try (Connection conn = getConnection()) {
+            String sql1 = "SELECT email FROM customer WHERE email = ?";
+            PreparedStatement stmt1 = conn.prepareStatement(sql1);
+            stmt1.setString(1, cst.getEmail());
+
+            String sql2 = "SELECT phoneNumber FROM customer WHERE phoneNumber = ?";
+            PreparedStatement stmt2 = conn.prepareStatement(sql2);
+            stmt2.setString(1, cst.getPhoneNumber());
+
+            ResultSet rs1 = stmt1.executeQuery();
+            if (rs1.next()) {
+                dataExists = "email";
+            }
+            rs1.close();
+
+            if (dataExists == null) {
+                ResultSet rs2 = stmt2.executeQuery();
+                if (rs2.next()) {
+                    dataExists = "phone";
+                }
+                rs2.close();
+            }
+
+            stmt1.close();
+            stmt2.close();
+        }
+        return dataExists;
+    }
 }

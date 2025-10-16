@@ -111,12 +111,18 @@ public class Tour {
         this.languageGuideNeed = languageGuideNeed;
     }
 
-    public void setTourState(String tourState) {
-        this.tourState = tourState;
+    public void setTourState(int passengersSign) {
+        if(this.getCurrentPassengers() + passengersSign <= this.getMaxNumberOfPassengers()) {
+            this.tourState = "Not Full";
+        }
+        else this.tourState = "Full";
     }
 
-    public void setTourGuideState(String tourGuideState) {
-        this.tourGuideState = tourGuideState;
+    public void setTourGuideState() {
+        if(this.getCurrentGuides() + 1 <= this.getMaxNumberOfGuides()) {
+            this.tourGuideState = "NOT FULL";
+        }
+        else this.tourGuideState = "FULL";
     }
 
     public void setNumberOfDays(Double numberOfDays) {
@@ -142,4 +148,5 @@ public class Tour {
     public void setCurrentGuides(int currentGuides) {
         this.currentGuides += currentGuides;
     }
+
 }

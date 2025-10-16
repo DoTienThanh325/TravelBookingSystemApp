@@ -159,21 +159,12 @@ class TourInput extends JFrame {
                 tour.setLanguageGuideNeed(guideCondition);
 
                 // lưu vào database
-                TourDAO tourDAO = new TourDAO();
-                tourDAO.addTour(tour);
+                TourDAO.addTour(tour);
                 
                 // cập nhật trạng thái thành công
                 statusLabel.setText("✅ Thêm tour thành công!");
                 statusLabel.setForeground(Color.GREEN);
                 
-                // hiển thị lại thông tin tour đã tạo
-                //  JOptionPane.showMessageDialog(this,
-                //     "Tour : " + tourName + "\nGiá: " + price + " VND / người\n" + "Thời gian: " + numberOfDaysStr +
-                //     "\nSố lượng hành khách: " + numberOfPassengersStr + " người" + "\nSố lượng hướng dẫn viên: "
-                //     + numberOfGuidesStr + " người"
-                //     + "\nĐiều kiện hướng dẫn viên: " + guideCondition,
-                //     "Thông tin chuyến đi", JOptionPane.INFORMATION_MESSAGE);
-
             } catch (NumberFormatException ex) {
                 statusLabel.setText("❌️ Lỗi định dạng số!");
                 statusLabel.setForeground(Color.RED);
