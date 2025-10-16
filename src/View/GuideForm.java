@@ -1,13 +1,15 @@
 package View;
 
-import Guide_dao.GuideDAO;
 import Main.Main;
 import Model.Guide;
 import Model.Tour;
-import TourDAO.TourDAO;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import DAO.GuideDAO;
+import DAO.TourDAO;
+
 import java.awt.*;
 import java.sql.SQLException;
 
@@ -148,8 +150,14 @@ class GuideSignIn extends JFrame {
             } catch (ClassNotFoundException | SQLException e1) {
                 e1.printStackTrace();
             }
-            new BookingTour(guide, DB_URL, DB_USER, DB_PASSWORD);
-            dispose();
+            try {
+                new BookingTour(guide, DB_URL, DB_USER, DB_PASSWORD);
+                dispose();
+            } catch (ClassNotFoundException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+
         });
 
         panel.add(lblName);
@@ -177,7 +185,7 @@ class GuideSignIn extends JFrame {
 class BookingTour extends JFrame {
 
     public BookingTour(Guide guide,
-            String DB_URL, String DB_USER, String DB_PASSWORD) {
+            String DB_URL, String DB_USER, String DB_PASSWORD) throws ClassNotFoundException {
         setTitle("Chọn tour dẫn");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -188,7 +196,7 @@ class BookingTour extends JFrame {
         TourDAO tourDao = new TourDAO();
 
         JLabel lblTour = new JLabel("Tên tour:");
-        String[] tours = tourDao.collectTourInfo(DB_URL, DB_USER, DB_PASSWORD);
+        String[] tours = tourDao.collectTourInfo();
         JComboBox<String> cbTour = new JComboBox<>(tours);
 
         JLabel lblDate = new JLabel("Ngày khởi hành:");
@@ -199,15 +207,16 @@ class BookingTour extends JFrame {
 
         JLabel statusLabel = new JLabel("Trạng thái Tour: ");
         JLabel lblTourState = new JLabel("NOT FULL");
+        lblTourState.setForeground(new Color(0, 102, 0));
 
         if (cbTour.getItemCount() > 0) {
             String initialTour = (String) cbTour.getSelectedItem();
-            String[] initialDates = tourDao.collectTourStartDate(initialTour, DB_URL, DB_USER, DB_PASSWORD);
+            String[] initialDates = tourDao.collectTourStartDate(initialTour);
             cbDate.setModel(new DefaultComboBoxModel<>(initialDates));
 
             if (cbDate.getItemCount() > 0) {
                 String initialDate = (String) cbDate.getSelectedItem();
-                Double[] initialDays = tourDao.collectTourDays(initialTour, initialDate, DB_URL, DB_USER, DB_PASSWORD);
+                Double[] initialDays = tourDao.collectTourDays(initialTour, initialDate);
                 cbNumberOfDays.setModel(new DefaultComboBoxModel<>(initialDays));
             }
         }
@@ -216,15 +225,20 @@ class BookingTour extends JFrame {
         cbTour.addActionListener(e -> {
             String selectedTour = (String) cbTour.getSelectedItem();
             if (selectedTour != null) {
-                String[] newDates = tourDao.collectTourStartDate(selectedTour, DB_URL, DB_USER, DB_PASSWORD);
-                cbDate.setModel(new DefaultComboBoxModel<>(newDates));
-
-                if (cbDate.getItemCount() > 0) {
-                    String firstDate = (String) cbDate.getSelectedItem();
-                    Double[] newNumDays = tourDao.collectTourDays(selectedTour, firstDate, DB_URL, DB_USER,
-                            DB_PASSWORD);
-                    cbNumberOfDays.setModel(new DefaultComboBoxModel<>(newNumDays));
+                String[] newDates;
+                try {
+                    newDates = tourDao.collectTourStartDate(selectedTour);
+                    cbDate.setModel(new DefaultComboBoxModel<>(newDates));
+                    if (cbDate.getItemCount() > 0) {
+                        String firstDate = (String) cbDate.getSelectedItem();
+                        Double[] newNumDays = tourDao.collectTourDays(selectedTour, firstDate);
+                        cbNumberOfDays.setModel(new DefaultComboBoxModel<>(newNumDays));
+                    }
+                } catch (ClassNotFoundException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
                 }
+
             }
             reupTourGuideStatus(lblTourState);
         });
@@ -234,8 +248,14 @@ class BookingTour extends JFrame {
             String selectedTour = (String) cbTour.getSelectedItem();
             String selectedDate = (String) cbDate.getSelectedItem();
             if (selectedTour != null && selectedDate != null) {
-                Double[] newNumDays = tourDao.collectTourDays(selectedTour, selectedDate, DB_URL, DB_USER, DB_PASSWORD);
-                cbNumberOfDays.setModel(new DefaultComboBoxModel<>(newNumDays));
+                Double[] newNumDays;
+                try {
+                    newNumDays = tourDao.collectTourDays(selectedTour, selectedDate);
+                    cbNumberOfDays.setModel(new DefaultComboBoxModel<>(newNumDays));
+                } catch (ClassNotFoundException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
             }
             reupTourGuideStatus(lblTourState);
         });
@@ -262,19 +282,8 @@ class BookingTour extends JFrame {
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            updateTourGuideStatus(tourId, lblTourState, guide, DB_URL, DB_URL, DB_PASSWORD);
+            updateTourGuideStatus(tourId, lblTourState, guide, tourName, date);
 
-            JOptionPane.showMessageDialog(this,
-                    "Họ và tên: " + guide.getName() +
-                            "\nNgày sinh: " + guide.getBirthday() +
-                            "\nSố điện thoại: " + guide.getPhoneNumber() +
-                            "\nEmail: " + guide.getEmail() +
-                            "\nKinh nghiệm: " + guide.getGuideExperience() + " năm" +
-                            "\nNgoại ngữ: " + guide.getForeignLanguageAsString() +
-                            "\nTên tour: " + tourName +
-                            "\nNgày khởi hành: " + date,
-                    "Xác nhận dẫn tour",
-                    JOptionPane.INFORMATION_MESSAGE);
         });
         panel.add(lblTour);
         panel.add(cbTour);
@@ -290,7 +299,7 @@ class BookingTour extends JFrame {
         setVisible(true);
     }
 
-    private void updateTourGuideStatus(String tourId, JLabel lblTourState, Guide guide, String DB_URL, String DB_USER, String DB_PASSWORD){
+    private void updateTourGuideStatus(String tourId, JLabel lblTourState, Guide guide, String tourName, String date) {
         Tour tour = new Tour();
         try {
             tour = TourDAO.getTourById(tourId);
@@ -298,12 +307,13 @@ class BookingTour extends JFrame {
             e1.printStackTrace();
         }
         tour.setTourGuideState();
-        String tourState = tour.getTourState();
+        String tourGuideState = tour.getTourGuideState();
 
-        lblTourState.setText(tourState);
-        if ("FULL".equalsIgnoreCase(tourState)) {
+        lblTourState.setText(tourGuideState);
+        if ("FULL".equalsIgnoreCase(tourGuideState)) {
             lblTourState.setForeground(Color.RED);
-            JOptionPane.showMessageDialog(this, "⚠️ Tour này đã đủ Hướng dẫn viên! Vui lòng chọn tour khác.", "Tour Đã Đầy",
+            JOptionPane.showMessageDialog(this, "⚠️ Tour này đã đủ Hướng dẫn viên! Vui lòng chọn tour khác.",
+                    "Tour Đã Đầy",
                     JOptionPane.WARNING_MESSAGE);
         } else {
             lblTourState.setForeground(new Color(0, 102, 0)); // Màu xanh lá cây đậm
@@ -320,7 +330,7 @@ class BookingTour extends JFrame {
                         JOptionPane.INFORMATION_MESSAGE);
                 // set các thông số cho tour khi đủ điều kiện
                 tour.setCurrentGuides(1);
-                tour.setTourState(1);
+                tour.setTourGuideState();
                 try {
                     TourDAO.updateTour(tour, tourId);
                 } catch (ClassNotFoundException | SQLException e1) {
@@ -336,9 +346,21 @@ class BookingTour extends JFrame {
                 } catch (ClassNotFoundException e1) {
                     e1.printStackTrace();
                 }
+                JOptionPane.showMessageDialog(this,
+                        "Họ và tên: " + guide.getName() +
+                                "\nNgày sinh: " + guide.getBirthday() +
+                                "\nSố điện thoại: " + guide.getPhoneNumber() +
+                                "\nEmail: " + guide.getEmail() +
+                                "\nKinh nghiệm: " + guide.getGuideExperience() + " năm" +
+                                "\nNgoại ngữ: " + guide.getForeignLanguageAsString() +
+                                "\nTên tour: " + tourName +
+                                "\nNgày khởi hành: " + date,
+                        "Xác nhận dẫn tour",
+                        JOptionPane.INFORMATION_MESSAGE);
             }
         }
     }
+
     private void reupTourGuideStatus(JLabel lblTourState) {
         lblTourState.setText("NOT FULL");
         lblTourState.setForeground(new Color(0, 102, 0));

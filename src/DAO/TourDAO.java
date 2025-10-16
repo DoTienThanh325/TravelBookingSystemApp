@@ -1,4 +1,4 @@
-package TourDAO;
+package DAO;
 
 import Model.Tour;
 
@@ -13,7 +13,7 @@ public class TourDAO {
     // Thêm Tour vào Database
     public static void addTour(Tour tour) throws SQLException, ClassNotFoundException {
 
-        try (Connection conn = TourDBConnection.getConnection()) {
+        try (Connection conn = GetConnectionDAO.getConnection()) {
             String sql = "INSERT INTO TOUR (tourName, startFrom, destination, dayStart, numberOfDays, price, maxNumberOfPassengers, currentPassengers, tourState,  maxNumberOfGuides, currentGuides, tourGuideState, languageGuideNeed) VALUES (?, ?, ?, STR_TO_DATE(?, '%d/%m/%Y'), ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement pstmt = conn.prepareStatement(sql);
 
@@ -47,7 +47,7 @@ public class TourDAO {
     public static Tour getTourById(String tourId) throws SQLException, ClassNotFoundException {
         String sql = "SELECT * FROM TOUR WHERE tourId = ?";
         Tour tour = null;
-        try (Connection conn = TourDBConnection.getConnection();
+        try (Connection conn = GetConnectionDAO.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, tourId);
             ResultSet rs = pstmt.executeQuery();
@@ -65,7 +65,7 @@ public class TourDAO {
     public static void updateTour(Tour tour, String tourId) throws SQLException, ClassNotFoundException {
         String sql = "UPDATE TOUR SET currentPassengers = ?, tourState = ?, currentGuides = ?, tourGuideState = ? WHERE tourId = ?";
 
-        try (Connection conn = TourDBConnection.getConnection();
+        try (Connection conn = GetConnectionDAO.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setInt(1, tour.getCurrentPassengers());
@@ -113,10 +113,10 @@ public class TourDAO {
     }
 
     // Hàm lấy tên tour
-    public String[] collectTourInfo(String DB_URL, String DB_USER, String DB_PASSWORD) {
+    public String[] collectTourInfo() throws ClassNotFoundException {
         ArrayList<String> arr = new ArrayList<>();
         String sql = "select distinct tourName from TOUR";
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = GetConnectionDAO.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -132,11 +132,11 @@ public class TourDAO {
     }
 
     // Hàm lấy dayStart
-    public String[] collectTourStartDate(String tourName, String DB_URL, String DB_USER, String DB_PASSWORD) {
+    public String[] collectTourStartDate(String tourName) throws ClassNotFoundException {
         ArrayList<String> arrStart = new ArrayList<>();
         String sql = "select dayStart from TOUR where tourName = ?";
         SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = GetConnectionDAO.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tourName);
             try (ResultSet rs = ps.executeQuery()) {
@@ -155,10 +155,10 @@ public class TourDAO {
     }
 
     // Hàm lấy numberOfDays
-    public Double[] collectTourDays(String tourName, String date, String DB_URL, String DB_USER, String DB_PASSWORD) {
+    public Double[] collectTourDays(String tourName, String date) throws ClassNotFoundException {
         ArrayList<Double> arr = new ArrayList<>();
         String sql = "select numberOfDays from TOUR where tourName = ? and dayStart = STR_TO_DATE(?, '%d/%m/%Y')";
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = GetConnectionDAO.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tourName);
             ps.setString(2, date);

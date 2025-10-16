@@ -1,4 +1,4 @@
-package Customer_dao;
+package DAO;
 
 import Model.Customer;
 import java.math.BigDecimal;
@@ -7,14 +7,6 @@ import java.time.format.*;
 import java.time.LocalDate;
 
 public class CustomerDAO {
-    private static final String URL = "jdbc:mysql://localhost:3306/TravelBookingSystemApp";
-    private static final String USER = "root";
-    private static final String PASSWORD = "12345khongcho";
-
-    private static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
-    }
-
     // Chuẩn hóa ngày
     private static String normalizeDate(String date) {
         if (date == null || date.trim().isEmpty())
@@ -70,9 +62,9 @@ public class CustomerDAO {
     }
 
     // Tìm tourId khi biết tourName và dayStart và numberOfDays
-    public static String findTourId(String tourName, String dayStart, double numberOfDay) {
+    public static String findTourId(String tourName, String dayStart, double numberOfDay) throws ClassNotFoundException {
         String tourId = null;
-        try (Connection conn = getConnection()) {
+        try (Connection conn = GetConnectionDAO.getConnection()) {
             String sql = "SELECT tourId FROM TOUR WHERE tourName = ? AND dayStart = STR_TO_DATE(?, '%d/%m/%Y') AND numberOfDays = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, tourName);
@@ -96,9 +88,9 @@ public class CustomerDAO {
     }
 
     // Tìm trạng thái tour
-    public static String findTourState(String tourId) {
+    public static String findTourState(String tourId) throws ClassNotFoundException {
         String tourState = null;
-        try (Connection conn = getConnection()) {
+        try (Connection conn = GetConnectionDAO.getConnection()) {
             String sql = "SELECT tourState FROM TOUR WHERE tourId = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, tourId);
@@ -118,9 +110,9 @@ public class CustomerDAO {
         return tourState;
     }
 
-    public static BigDecimal findPrice(String Id) {
+    public static BigDecimal findPrice(String Id) throws ClassNotFoundException {
         BigDecimal price = null;
-        try (Connection conn = getConnection()) {
+        try (Connection conn = GetConnectionDAO.getConnection()) {
             String sql = "SELECT price FROM TOUR WHERE tourId = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, Id);
@@ -141,8 +133,8 @@ public class CustomerDAO {
         return price;
     }
 
-    public static void addCustomer(Customer cst) {
-        try (Connection conn = getConnection()) {
+    public static void addCustomer(Customer cst) throws ClassNotFoundException {
+        try (Connection conn = GetConnectionDAO.getConnection()) {
             String sql = "INSERT INTO customer (name, birthday, phoneNumber, email, tourBooking, " +
                     "bookingState, bookingDate, numberOfCustomers, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(sql);
@@ -171,9 +163,9 @@ public class CustomerDAO {
         }
     }
 
-    public static String check(Customer cst) throws SQLException {
+    public static String check(Customer cst) throws SQLException, ClassNotFoundException {
         String dataExists = null;
-        try (Connection conn = getConnection()) {
+        try (Connection conn = GetConnectionDAO.getConnection()) {
             String sql1 = "SELECT email FROM customer WHERE email = ?";
             PreparedStatement stmt1 = conn.prepareStatement(sql1);
             stmt1.setString(1, cst.getEmail());

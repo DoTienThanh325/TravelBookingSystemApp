@@ -3,11 +3,12 @@ package View;
 import Main.Main;
 import Model.Customer;
 import Model.Tour;
-import TourDAO.TourDAO;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-import Customer_dao.CustomerDAO;
+import DAO.CustomerDAO;
+import DAO.TourDAO;
 
 import java.awt.*;
 import java.math.BigDecimal;
@@ -80,11 +81,14 @@ public class CustomerForm extends JFrame {
                     statusLabel.setForeground(Color.RED);
                     return;
                 } else {
-                    new TourWindow(customer, DB_URL, DB_USER, DB_PASSWORD);
+                    new TourWindow(customer);
                     dispose();
                 }
             } catch (SQLException e1) {
 
+                e1.printStackTrace();
+            } catch (ClassNotFoundException e1) {
+                // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
         });
@@ -107,7 +111,7 @@ public class CustomerForm extends JFrame {
 }
 
 class TourWindow extends JFrame {
-    public TourWindow(Customer customer, String DB_URL, String DB_USER, String DB_PASSWORD) {
+    public TourWindow(Customer customer) throws ClassNotFoundException {
         setTitle("Đăng ký tour");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -118,7 +122,7 @@ class TourWindow extends JFrame {
         TourDAO tourDao = new TourDAO();
 
         JLabel lblTour = new JLabel("Tên tour:");
-        String[] tours = tourDao.collectTourInfo(DB_URL, DB_USER, DB_PASSWORD);
+        String[] tours = tourDao.collectTourInfo();
         JComboBox<String> cbTour = new JComboBox<>(tours);
 
         JLabel lblDate = new JLabel("Ngày khởi hành:");
@@ -138,12 +142,12 @@ class TourWindow extends JFrame {
         // Tải dữ liệu lần đầu cho tour được chọn mặc định
         if (cbTour.getItemCount() > 0) {
             String initialTour = (String) cbTour.getSelectedItem();
-            String[] initialDates = tourDao.collectTourStartDate(initialTour, DB_URL, DB_USER, DB_PASSWORD);
+            String[] initialDates = tourDao.collectTourStartDate(initialTour);
             cbDate.setModel(new DefaultComboBoxModel<>(initialDates));
 
             if (cbDate.getItemCount() > 0) {
                 String initialDate = (String) cbDate.getSelectedItem();
-                Double[] initialDays = tourDao.collectTourDays(initialTour, initialDate, DB_URL, DB_USER, DB_PASSWORD);
+                Double[] initialDays = tourDao.collectTourDays(initialTour, initialDate);
                 cbNumberOfDays.setModel(new DefaultComboBoxModel<>(initialDays));
             }
 
@@ -153,14 +157,18 @@ class TourWindow extends JFrame {
         cbTour.addActionListener(e -> {
             String selectedTour = (String) cbTour.getSelectedItem();
             if (selectedTour != null) {
-                String[] newDates = tourDao.collectTourStartDate(selectedTour, DB_URL, DB_USER, DB_PASSWORD);
-                cbDate.setModel(new DefaultComboBoxModel<>(newDates));
-
-                if (cbDate.getItemCount() > 0) {
-                    String firstDate = (String) cbDate.getSelectedItem();
-                    Double[] newNumDays = tourDao.collectTourDays(selectedTour, firstDate, DB_URL, DB_USER,
-                            DB_PASSWORD);
-                    cbNumberOfDays.setModel(new DefaultComboBoxModel<>(newNumDays));
+                String[] newDates;
+                try {
+                    newDates = tourDao.collectTourStartDate(selectedTour);
+                    cbDate.setModel(new DefaultComboBoxModel<>(newDates));
+                    if (cbDate.getItemCount() > 0) {
+                        String firstDate = (String) cbDate.getSelectedItem();
+                        Double[] newNumDays = tourDao.collectTourDays(selectedTour, firstDate);
+                        cbNumberOfDays.setModel(new DefaultComboBoxModel<>(newNumDays));
+                    }
+                } catch (ClassNotFoundException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
                 }
             }
             reupTourStatus(lblTourState);
@@ -171,8 +179,14 @@ class TourWindow extends JFrame {
             String selectedTour = (String) cbTour.getSelectedItem();
             String selectedDate = (String) cbDate.getSelectedItem();
             if (selectedTour != null && selectedDate != null) {
-                Double[] newNumDays = tourDao.collectTourDays(selectedTour, selectedDate, DB_URL, DB_USER, DB_PASSWORD);
-                cbNumberOfDays.setModel(new DefaultComboBoxModel<>(newNumDays));
+                Double[] newNumDays;
+                try {
+                    newNumDays = tourDao.collectTourDays(selectedTour, selectedDate);
+                    cbNumberOfDays.setModel(new DefaultComboBoxModel<>(newNumDays));
+                } catch (ClassNotFoundException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
             }
             reupTourStatus(lblTourState);
         });
@@ -206,8 +220,19 @@ class TourWindow extends JFrame {
             String date = (String) cbDate.getSelectedItem();
             Double numDays = (Double) cbNumberOfDays.getSelectedItem();
             int selectedNumber = (Integer) cbNumber.getSelectedItem();
-            String tourId = CustomerDAO.findTourId(tourName, date, numDays);
-            updateTourStatus(tourId, selectedNumber, lblTourState, customer, DB_URL, DB_USER, DB_PASSWORD);
+            try {
+                String tourId = CustomerDAO.findTourId(tourName, date, numDays);
+                try {
+                    updateTourStatus(tourId, selectedNumber, lblTourState, customer);
+                } catch (ClassNotFoundException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+            } catch (ClassNotFoundException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+
         });
 
         panel.add(lblTour);
@@ -228,8 +253,8 @@ class TourWindow extends JFrame {
 
     }
 
-    private void updateTourStatus(String tourId, int selectedNumber, JLabel lblTourState, Customer customer,
-            String DB_URL, String DB_USER, String DB_PASSWORD) {
+    private void updateTourStatus(String tourId, int selectedNumber, JLabel lblTourState, Customer customer)
+            throws ClassNotFoundException {
         Tour tour = new Tour();
         try {
             tour = TourDAO.getTourById(tourId);
@@ -257,7 +282,7 @@ class TourWindow extends JFrame {
             customer.setBookingDate(java.time.LocalDate.now().toString());
             customer.setNumberOfCustomers(selectedNumber);
 
-            new XacNhanThanhToan(customer, customer.getNumberOfCustomers(), DB_URL, DB_USER, DB_PASSWORD);
+            new XacNhanThanhToan(customer, customer.getNumberOfCustomers());
             dispose();
         }
     }
@@ -269,7 +294,7 @@ class TourWindow extends JFrame {
 }
 
 class XacNhanThanhToan extends JFrame {
-    public XacNhanThanhToan(Customer customer, int n, String DB_URL, String DB_USER, String DB_PASSWORD) {
+    public XacNhanThanhToan(Customer customer, int n) throws ClassNotFoundException {
         setTitle("Xác nhận thanh toán");
         setSize(400, 200);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -295,7 +320,12 @@ class XacNhanThanhToan extends JFrame {
         btnNotPay.addActionListener(e -> {
             JOptionPane.showMessageDialog(this, "Xác nhận chưa thanh toán");
             customer.setBookingState("Pending");
-            CustomerDAO.addCustomer(customer);
+            try {
+                CustomerDAO.addCustomer(customer);
+            } catch (ClassNotFoundException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
             dispose();
         });
         JButton btnPay = new JButton("Xác nhận thanh toán");
@@ -317,7 +347,12 @@ class XacNhanThanhToan extends JFrame {
 
             JOptionPane.showMessageDialog(this, "Thanh toán thành công!\nCảm ơn bạn đã sử dụng dịch vụ.");
             customer.setBookingState("Confirmed");
-            CustomerDAO.addCustomer(customer);
+            try {
+                CustomerDAO.addCustomer(customer);
+            } catch (ClassNotFoundException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
             dispose();
         });
 

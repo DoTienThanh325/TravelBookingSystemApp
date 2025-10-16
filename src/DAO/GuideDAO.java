@@ -1,4 +1,4 @@
-package Guide_dao;
+package DAO;
 
 import Model.Guide;
 import java.util.*;

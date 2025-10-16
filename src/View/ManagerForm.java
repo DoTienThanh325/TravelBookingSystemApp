@@ -6,9 +6,12 @@ package View;
 
 import Main.Main;
 import Model.Tour;
-import TourDAO.TourDAO;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import DAO.TourDAO;
+
 import java.awt.*;
 import java.sql.*;
 
