@@ -115,7 +115,7 @@ public class TourDAO {
     // Hàm lấy tên tour
     public String[] collectTourInfo() throws ClassNotFoundException {
         ArrayList<String> arr = new ArrayList<>();
-        String sql = "select distinct tourName from TOUR";
+        String sql = "select distinct tourName from TOUR where tourState = 'Not Full' ";
         try (Connection conn = GetConnectionDAO.getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {

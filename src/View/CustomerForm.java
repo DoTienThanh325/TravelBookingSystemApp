@@ -191,7 +191,9 @@ class TourWindow extends JFrame {
             reupTourStatus(lblTourState);
         });
 
-        // Bỏ ActionListener của cbNumberOfDays
+        cbNumber.addActionListener(e -> {
+            reupTourStatus(lblTourState);
+        });
 
         JButton btnConfirm = new JButton("Xác nhận");
         btnConfirm.addActionListener(e -> {
@@ -199,18 +201,25 @@ class TourWindow extends JFrame {
             String date = (String) cbDate.getSelectedItem();
             String numPeople = cbNumber.getSelectedItem().toString();
             Double numDays = (Double) cbNumberOfDays.getSelectedItem();
+            try {
+                String tourId = CustomerDAO.findTourId(tourName, date, numDays);
+                JOptionPane.showMessageDialog(this,
+                        "TourId: " + tourId +
+                                "\nHọ và tên: " + customer.getName() +
+                                "\nNgày sinh: " + customer.getBirthday() +
+                                "\nSố điện thoại: " + customer.getPhoneNumber() +
+                                "\nEmail: " + customer.getEmail() +
+                                "\nTên tour: " + tourName +
+                                "\nNgày khởi hành: " + date +
+                                "\nSố ngày: " + numDays +
+                                "\nSố người đi: " + numPeople + " người",
+                        "Xác nhận đặt tour",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } catch (ClassNotFoundException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
 
-            JOptionPane.showMessageDialog(this,
-                    "Họ và tên: " + customer.getName() +
-                            "\nNgày sinh: " + customer.getBirthday() +
-                            "\nSố điện thoại: " + customer.getPhoneNumber() +
-                            "\nEmail: " + customer.getEmail() +
-                            "\nTên tour: " + tourName +
-                            "\nNgày khởi hành: " + date +
-                            "\nSố ngày: " + numDays +
-                            "\nSố người đi: " + numPeople + " người",
-                    "Xác nhận đặt tour",
-                    JOptionPane.INFORMATION_MESSAGE);
         });
 
         JButton btnPay = new JButton("Thanh toán");
@@ -269,20 +278,19 @@ class TourWindow extends JFrame {
             lblTourState.setForeground(Color.RED);
             JOptionPane.showMessageDialog(this, "⚠️ Tour này đã đủ người! Vui lòng chọn tour khác.", "Tour Đã Đầy",
                     JOptionPane.WARNING_MESSAGE);
+            System.out.println(tour.getTourState());
+            System.out.println(tour.getCurrentPassengers());
+            tour.setTourState(0 - selectedNumber);
         } else {
             lblTourState.setForeground(new Color(0, 102, 0)); // Màu xanh lá cây đậm
             tour.setCurrentPassengers(selectedNumber);
             tour.setTourState(1);
-            try {
-                TourDAO.updateTour(tour, tourId);
-            } catch (ClassNotFoundException | SQLException e1) {
-                e1.printStackTrace();
-            }
+    
             customer.setTourBooking(tourId);
             customer.setBookingDate(java.time.LocalDate.now().toString());
             customer.setNumberOfCustomers(selectedNumber);
 
-            new XacNhanThanhToan(customer, customer.getNumberOfCustomers());
+            new XacNhanThanhToan(customer, customer.getNumberOfCustomers(), tourId, tour);
             dispose();
         }
     }
@@ -294,9 +302,9 @@ class TourWindow extends JFrame {
 }
 
 class XacNhanThanhToan extends JFrame {
-    public XacNhanThanhToan(Customer customer, int n) throws ClassNotFoundException {
+    public XacNhanThanhToan(Customer customer, int n, String tourId, Tour tour) throws ClassNotFoundException {
         setTitle("Xác nhận thanh toán");
-        setSize(400, 200);
+        setSize(400, 400);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -311,7 +319,7 @@ class XacNhanThanhToan extends JFrame {
         JLabel lblTotalAmount = new JLabel(String.format("%.2f VND", total));
 
         JLabel lblInfo = new JLabel(
-                "<html>Nhập mã xác minh: <br> Mã xác minh bằng <br> Tên + chuyển khoản + số người</html>");
+                "<html>Nhập mã xác minh: <br> Mã xác minh bằng <br> TourId + số người <br> VD: TOUR0013</html>");
         JTextField txtCode = new JTextField(); // Mã xác minh bằng Id + số người đăng ký (chuyển về chuỗi)
 
         JLabel statusLabel = new JLabel("", SwingConstants.CENTER);
@@ -322,6 +330,11 @@ class XacNhanThanhToan extends JFrame {
             customer.setBookingState("Pending");
             try {
                 CustomerDAO.addCustomer(customer);
+                try {
+                    TourDAO.updateTour(tour, tourId);
+                } catch (ClassNotFoundException | SQLException e1) {
+                    e1.printStackTrace();
+                }
             } catch (ClassNotFoundException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
@@ -331,24 +344,21 @@ class XacNhanThanhToan extends JFrame {
         JButton btnPay = new JButton("Xác nhận thanh toán");
         btnPay.addActionListener(e -> {
             String code = txtCode.getText();
-            if (customer.getNumberOfCustomers() == 1) {
-                if (!code.equals(customer.getName() + " person ")) {
-                    statusLabel.setText("❌ Mã xác nhận không dúng");
-                    statusLabel.setForeground(Color.RED);
-                    return;
-                }
-            } else {
-                if (!code.equals(customer.getName() + " group ")) {
-                    statusLabel.setText("❌ Mã xác nhận không dúng");
-                    statusLabel.setForeground(Color.RED);
-                    return;
-                }
+            if (!code.equals(tourId + String.valueOf(n))) {
+                statusLabel.setText("❌ Mã xác nhận không dúng");
+                statusLabel.setForeground(Color.RED);
+                return;
             }
 
             JOptionPane.showMessageDialog(this, "Thanh toán thành công!\nCảm ơn bạn đã sử dụng dịch vụ.");
             customer.setBookingState("Confirmed");
             try {
                 CustomerDAO.addCustomer(customer);
+                try {
+                    TourDAO.updateTour(tour, tourId);
+                } catch (ClassNotFoundException | SQLException e1) {
+                    e1.printStackTrace();
+                }
             } catch (ClassNotFoundException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
